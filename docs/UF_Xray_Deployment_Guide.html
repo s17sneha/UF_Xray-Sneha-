@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UF‑Xray Deployment Guide</title>
+  <style>
+    :root { --ink:#111827; --muted:#374151; --brand:#1d4ed8; }
+    html, body { margin:0; padding:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; color:var(--ink); }
+    .page { max-width: 900px; margin: 40px auto; padding: 0 20px 60px; }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+    h2 { font-size: 1.35rem; margin: 2rem 0 0.5rem; }
+    h3 { font-size: 1.1rem; margin: 1.2rem 0 0.4rem; }
+    p, li { line-height: 1.6; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    pre { background:#f3f4f6; padding: 12px 14px; border-radius: 8px; overflow:auto; }
+    .muted { color: var(--muted); }
+    .meta { display:flex; gap:10px; align-items:center; color:#6b7280; margin: 0 0 20px; }
+    .btnbar { position: sticky; top:0; background:white; padding: 10px 0; border-bottom:1px solid #e5e7eb; margin-bottom: 16px; }
+    .print { background: var(--brand); color:white; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; }
+    a { color: var(--brand); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    @media print {
+      .btnbar { display:none; }
+      a { color: inherit; text-decoration: none; }
+      .page { margin: 0; max-width: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="btnbar">
+      <button class="print" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+
+    <h1>UF‑Xray Deployment Guide</h1>
+    <div class="meta">
+      <div><strong>Version:</strong> 1.0</div>
+      <div><strong>Date:</strong> 2025‑09‑20</div>
+    </div>
+
+    <h2>1) Repo Layout (deploy‑related)</h2>
+    <ul>
+      <li><strong>Frontend</strong>: React at repo root. Workflow: <code>.github/workflows/deploy.yml</code>.</li>
+      <li><strong>Backend</strong>: <code>server/</code> (Express + Python). Dockerfile inside.</li>
+      <li><strong>Render</strong> blueprint: <code>render.yaml</code> at repo root.</li>
+    </ul>
+
+    <h2>2) Frontend — GitHub Pages (CI/CD)</h2>
+    <ul>
+      <li>Package homepage: <code>"homepage": "https://&lt;username&gt;.github.io/UF_Xray"</code></li>
+      <li>Workflow steps: checkout → Node 18 → <code>npm ci</code> → build → upload → deploy Pages.</li>
+      <li>Build env: <code>REACT_APP_API_URL</code> from GitHub Secrets, <code>CI=false</code> to ignore warnings.</li>
+      <li>Trigger: push to <code>main</code> or manual Run workflow.</li>
+      <li>Routing: <code>HashRouter</code> supports <code>/#/News</code> etc. on static hosting.</li>
+    </ul>
+
+    <h2>3) Backend — Render (Docker)</h2>
+    <ul>
+      <li>Dockerfile installs Node + Python + pip dependencies, exposes <code>5000</code>, runs <code>npm start</code>.</li>
+      <li>render.yaml defines a web service with <code>rootDir: server</code> and <code>healthCheckPath: /healthz</code>.</li>
+      <li>Deploy via: Render → New → Blueprint → select repo → Create Resources → Deploy.</li>
+      <li>After LIVE, copy the service URL (e.g., <code>https://uf-xray-api.onrender.com</code>).</li>
+      <li>Verify: <code>/healthz</code>, <code>/api/news</code>, <code>/api/scan-url</code>, <code>/api/scan-file</code>, <code>/api/scan-log</code>.</li>
+    </ul>
+
+    <h2>4) Connect Frontend ↔ Backend</h2>
+    <ul>
+      <li>GitHub Secret: <code>REACT_APP_API_URL</code> =&gt; your backend URL.</li>
+      <li>Re‑run Pages workflow so the built app points to the correct API.</li>
+      <li>Local dev falls back to <code>http://localhost:5000</code> when on <code>localhost</code>.</li>
+    </ul>
+
+    <h2>5) Mixed‑Content Safe News Images</h2>
+    <ul>
+      <li>Some feeds serve <code>http://</code> images; browsers block them on <code>https://</code>.</li>
+      <li>Backend proxy <code>GET /api/news-image?src=...</code> serves the image over HTTPS.</li>
+      <li>Frontend routes <code>http://</code> images through the proxy, keeps <code>https://</code> images direct.</li>
+    </ul>
+
+    <h2>6) Manual Frontend Deploy (optional)</h2>
+    <pre>echo REACT_APP_API_URL=https://your-backend &gt; .env.production
+npm install
+npm run deploy</pre>
+
+    <h2>7) Troubleshooting</h2>
+    <ul>
+      <li><strong>Pages 404</strong>: repo Public, Pages Source = GitHub Actions, wait 1–5 min, use <code>/#/</code> routes.</li>
+      <li><strong>API fails</strong>: secret set? backend live? check <code>/healthz</code>. Re‑run workflow after changing secrets.</li>
+      <li><strong>RSS images</strong>: ensure backend with proxy is deployed; check network tab for <code>/api/news-image</code>.</li>
+    </ul>
+
+    <h2>8) Maintenance</h2>
+    <ul>
+      <li>Frontend: push to <code>main</code> auto‑deploys Pages.</li>
+      <li>Backend: Render Blueprint can autodeploy on push.</li>
+      <li>Rotate/Update <code>REACT_APP_API_URL</code> if backend URL changes.</li>
+    </ul>
+  </div>
+</body>
+</html>

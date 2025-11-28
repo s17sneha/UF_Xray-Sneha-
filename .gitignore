@@ -1,0 +1,9 @@
+node_modules
+
+# Env files
+.env
+server/.env
+
+# Build output
+build
+server/uploads

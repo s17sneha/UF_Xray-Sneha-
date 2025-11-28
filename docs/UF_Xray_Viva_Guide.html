@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UF‑Xray Viva Guide</title>
+  <style>
+    :root { --ink:#111827; --muted:#374151; --brand:#1d4ed8; }
+    html, body { margin:0; padding:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; color:var(--ink); }
+    .page { max-width: 900px; margin: 40px auto; padding: 0 20px 60px; }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+    h2 { font-size: 1.35rem; margin: 2rem 0 0.5rem; }
+    h3 { font-size: 1.1rem; margin: 1.2rem 0 0.4rem; }
+    p, li { line-height: 1.6; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    pre { background:#f3f4f6; padding: 12px 14px; border-radius: 8px; overflow:auto; }
+    .muted { color: var(--muted); }
+    .meta { display:flex; gap:10px; align-items:center; color:#6b7280; margin: 0 0 20px; }
+    .btnbar { position: sticky; top:0; background:white; padding: 10px 0; border-bottom:1px solid #e5e7eb; margin-bottom: 16px; }
+    .print { background: var(--brand); color:white; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; }
+    a { color: var(--brand); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    @media print {
+      .btnbar { display:none; }
+      a { color: inherit; text-decoration: none; }
+      .page { margin: 0; max-width: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="btnbar">
+      <button class="print" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+
+    <h1>UF‑Xray Viva Guide</h1>
+    <div class="meta">
+      <div><strong>Version:</strong> 1.0</div>
+      <div><strong>Date:</strong> 2025‑09‑20</div>
+    </div>
+
+    <h2>1. Project Overview</h2>
+    <ul>
+      <li><strong>Purpose</strong>: Full‑stack security helper with URL, File, and Log analysis, plus Security News.</li>
+      <li><strong>Frontend</strong>: React + Tailwind CSS, deployed on GitHub Pages.</li>
+      <li><strong>Backend</strong>: Node.js (Express) + Python scanners, deployable on Render via Docker.</li>
+    </ul>
+
+    <h2>2. React Basics Used Here</h2>
+    <ul>
+      <li><strong>Functional Components + Hooks</strong>: <code>useState</code> for UI state, <code>useEffect</code> for data fetching.</li>
+      <li><strong>Routing</strong>: <code>react-router-dom</code> with <code>HashRouter</code> for static hosting compatibility.</li>
+      <li><strong>API Integration</strong>: <code>src/utils/api.js</code> wraps <code>fetch</code>; base URL from <code>REACT_APP_API_URL</code>.</li>
+      <li><strong>Styling</strong>: Tailwind utility classes; final build uses fixed light theme.</li>
+    </ul>
+
+    <h2>3. Frontend Architecture</h2>
+    <ul>
+      <li><strong>Navbar</strong> (<code>src/Components/Navbar.js</code>): Responsive nav, mobile “Scan” is collapsible with auto‑close.</li>
+      <li><strong>Home</strong> (<code>src/Components/Home.js</code>): Hero/shortcuts + News preview.</li>
+      <li><strong>News</strong> (<code>src/Components/News.js</code>): Lists headlines, routes <code>http://</code> images via backend proxy.</li>
+      <li><strong>AnalyzeURL/File/Log</strong>: Forms to send inputs to backend; shows results; supports downloads.</li>
+      <li><strong>Entrypoint</strong> (<code>src/index.js</code>): Forces light theme, normalizes URL for <code>HashRouter</code>.</li>
+    </ul>
+
+    <h3>Data Flow Example: News</h3>
+    <ol>
+      <li>On mount or when limit changes, component fetches <code>/api/news?limit=...</code>.</li>
+      <li>Sets <code>items</code> state; renders cards with title, summary, meta.</li>
+      <li>If image URL is <code>http://</code>, uses <code>/api/news-image?src=...</code> proxy to avoid mixed‑content on HTTPS.</li>
+    </ol>
+
+    <h2>4. Tailwind CSS Embedding</h2>
+    <ul>
+      <li><strong>Buttons</strong>: <code>px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700</code></li>
+      <li><strong>Cards</strong>: <code>rounded-2xl border border-gray-200 bg-white shadow hover:shadow-lg</code></li>
+      <li><strong>Layouts</strong>: <code>grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6</code></li>
+      <li><strong>Theme</strong>: Removed dark‑mode variants as per final requirement; fixed to light.</li>
+    </ul>
+
+    <h2>5. Backend Overview</h2>
+    <ul>
+      <li><strong>Express App</strong> (<code>server/server.js</code>): endpoints for scans, news, health check, and image proxy.</li>
+      <li><strong>Python Integration</strong>: <code>child_process.spawn</code> runs scripts and returns JSON results.</li>
+      <li><strong>News Aggregation</strong> (<code>server/news.js</code>): <code>rss-parser</code> over multiple feeds, 4h cache, image selection heuristics.</li>
+      <li><strong>CORS</strong>: Open for public access; allowed headers include Authorization.</li>
+    </ul>
+
+    <h2>6. Environment</h2>
+    <ul>
+      <li><strong>REACT_APP_API_URL</strong>: production base URL for API; configured via GitHub Actions secret or <code>.env.production</code>.</li>
+      <li><strong>Local Dev</strong>: base URL falls back to <code>http://localhost:5000</code> when running on localhost.</li>
+    </ul>
+
+    <h2>7. Deployment Summary</h2>
+    <ul>
+      <li><strong>Frontend</strong>: GitHub Actions workflow (<code>.github/workflows/deploy.yml</code>), Node 18, <code>npm ci</code>, build, deploy Pages.</li>
+      <li><strong>Backend</strong>: Render via Docker (<code>server/Dockerfile</code>) and <code>render.yaml</code> blueprint.</li>
+    </ul>
+
+    <h2>8. Security & Reliability</h2>
+    <ul>
+      <li><strong>Input validation</strong> for URL scan; file cleanup after processing.</li>
+      <li><strong>Error handling</strong> around Python processes; health endpoint.</li>
+      <li><strong>Image proxy</strong> adds caching, redirects, and timeout handling.</li>
+    </ul>
+
+    <h2>9. Performance & UX</h2>
+    <ul>
+      <li><strong>News limit</strong> and quick refresh.</li>
+      <li><strong>Mobile nav</strong> collapsible Scan section reduces scroll.</li>
+    </ul>
+
+    <h2>10. Common Viva Questions (with answers)</h2>
+    <ul>
+      <li><strong>Why HashRouter on GH Pages?</strong> Static hosting cannot rewrite URLs; hashes keep routes in the client.</li>
+      <li><strong>How do env vars reach React?</strong> CRA inlines <code>REACT_APP_*</code> at build time; we read them in the API layer.</li>
+      <li><strong>Why image proxy?</strong> To prevent mixed‑content blocking for <code>http://</code> images on an <code>https://</code> page.</li>
+      <li><strong>How are PDFs/JSON produced?</strong> Helpers in <code>src/utils/pdf.js</code> and <code>src/utils/download.js</code>.</li>
+      <li><strong>How does Node run Python?</strong> <code>spawn(PYTHON_BIN, [script, args])</code>, parse JSON from stdout.</li>
+      <li><strong>Benefits of Tailwind?</strong> Speed, consistency, responsive utilities without manual CSS.</li>
+    </ul>
+
+    <h2>11. Local Run</h2>
+    <pre>Backend:  cd server &amp;&amp; npm install &amp;&amp; npm start
+Frontend: npm install &amp;&amp; npm start  (open http://localhost:3000)</pre>
+
+    <h2>12. Troubleshooting Highlights</h2>
+    <ul>
+      <li><strong>GH Pages 404</strong>: Repo Public, Pages Source = GitHub Actions, wait 1–5 minutes, use <code>/#/</code> routes.</li>
+      <li><strong>Prod API fails</strong>: Set <code>REACT_APP_API_URL</code> secret, redeploy, verify <code>/healthz</code>.</li>
+      <li><strong>CI warnings</strong>: Build sets <code>CI=false</code> to avoid failing on warnings.</li>
+    </ul>
+  </div>
+</body>
+</html>
